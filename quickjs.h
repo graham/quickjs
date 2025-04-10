@@ -475,6 +475,7 @@ JS_EXTERN JSContext *JS_NewContextRaw(JSRuntime *rt);
 JS_EXTERN void JS_AddIntrinsicBaseObjects(JSContext *ctx);
 JS_EXTERN void JS_AddIntrinsicDate(JSContext *ctx);
 JS_EXTERN void JS_AddIntrinsicEval(JSContext *ctx);
+JS_EXTERN void JS_RemoveIntrinsicEval(JSContext *ctx);
 JS_EXTERN void JS_AddIntrinsicRegExpCompiler(JSContext *ctx);
 JS_EXTERN void JS_AddIntrinsicRegExp(JSContext *ctx);
 JS_EXTERN void JS_AddIntrinsicJSON(JSContext *ctx);
