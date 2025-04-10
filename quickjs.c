@@ -3455,6 +3455,8 @@ const char *JS_AtomToCString(JSContext *ctx, JSAtom atom)
     return cstr;
 }
 
+#ifndef QJS_DISABLE_PARSER
+
 /* return a string atom containing name concatenated with str1 */
 /* `str1` may be pure ASCII or UTF-8 encoded */
 // TODO(chqrlie): use string concatenation instead of UTF-8 conversion
@@ -3496,6 +3498,8 @@ static JSAtom js_atom_concat_num(JSContext *ctx, JSAtom name, uint32_t n)
     u32toa(buf, n);
     return js_atom_concat_str(ctx, name, buf);
 }
+
+#endif // QJS_DISABLE_PARSER
 
 static inline bool JS_IsEmptyString(JSValueConst v)
 {
@@ -20372,8 +20376,6 @@ static const JSOpCode opcode_info[OP_COUNT + (OP_TEMP_END - OP_TEMP_START)] = {
     opcode_info[(op) >= OP_TEMP_START ? \
                 (op) + (OP_TEMP_END - OP_TEMP_START) : (op)]
 
-static __exception int next_token(JSParseState *s);
-
 static void free_token(JSParseState *s, JSToken *token)
 {
     switch(token->val) {
@@ -20479,6 +20481,10 @@ int JS_PRINTF_FORMAT_ATTR(2, 3) js_parse_error(JSParseState *s, JS_PRINTF_FORMAT
                     s->line_num, s->col_num, backtrace_flags);
     return -1;
 }
+
+#ifndef QJS_DISABLE_PARSER
+
+static __exception int next_token(JSParseState *s);
 
 static int js_parse_expect(JSParseState *s, int tok)
 {
@@ -20824,6 +20830,8 @@ static __exception int js_parse_regexp(JSParseState *s)
     return -1;
 }
 
+#endif // QJS_DISABLE_PARSER
+
 static __exception int ident_realloc(JSContext *ctx, char **pbuf, size_t *psize,
                                      char *static_buf)
 {
@@ -20850,6 +20858,8 @@ static __exception int ident_realloc(JSContext *ctx, char **pbuf, size_t *psize,
     *psize = new_size;
     return 0;
 }
+
+#ifndef QJS_DISABLE_PARSER
 
 /* convert a TOK_IDENT to a keyword when needed */
 static void update_token_ident(JSParseState *s)
@@ -21425,6 +21435,8 @@ static __exception int next_token(JSParseState *s)
     return -1;
 }
 
+#endif // QJS_DISABLE_PARSER
+
 static int json_parse_error(JSParseState *s, const uint8_t *curp, const char *msg)
 {
     const uint8_t *p, *line_start;
@@ -21724,6 +21736,8 @@ static __exception int json_next_token(JSParseState *s)
     s->token.val = TOK_ERROR;
     return -1;
 }
+
+#ifndef QJS_DISABLE_PARSER
 
 /* only used for ':' and '=>', 'let' or 'function' look-ahead. *pp is
    only set if TOK_IMPORT is returned */
@@ -27641,6 +27655,8 @@ fail:
     return -1;
 }
 
+#endif // QJS_DISABLE_PARSER
+
 /* 'name' is freed */
 static JSModuleDef *js_new_module_def(JSContext *ctx, JSAtom name)
 {
@@ -27746,6 +27762,8 @@ static void js_free_module_def(JSContext *ctx, JSModuleDef *m)
     js_free(ctx, m);
 }
 
+#ifndef QJS_DISABLE_PARSER
+
 static int add_req_module_entry(JSContext *ctx, JSModuleDef *m,
                                 JSAtom module_name)
 {
@@ -27769,6 +27787,8 @@ static int add_req_module_entry(JSContext *ctx, JSModuleDef *m,
     rme->module = NULL;
     return i;
 }
+
+#endif // QJS_DISABLE_PARSER
 
 static JSExportEntry *find_export_entry(JSContext *ctx, const JSModuleDef *m,
                                         JSAtom export_name)
@@ -27814,6 +27834,8 @@ static JSExportEntry *add_export_entry2(JSContext *ctx,
     return me;
 }
 
+#ifndef QJS_DISABLE_PARSER
+
 static JSExportEntry *add_export_entry(JSParseState *s, JSModuleDef *m,
                                        JSAtom local_name, JSAtom export_name,
                                        JSExportTypeEnum export_type)
@@ -27836,6 +27858,8 @@ static int add_star_export_entry(JSContext *ctx, JSModuleDef *m,
     se->req_module_idx = req_module_idx;
     return 0;
 }
+
+#endif // QJS_DISABLE_PARSER
 
 /* create a C module */
 /* `name_str` may be pure ASCII or UTF-8 encoded */
@@ -29498,6 +29522,8 @@ static JSValue js_evaluate_module(JSContext *ctx, JSModuleDef *m)
     return js_dup(m->promise);
 }
 
+#ifndef QJS_DISABLE_PARSER
+
 static __exception JSAtom js_parse_from_clause(JSParseState *s)
 {
     JSAtom module_name;
@@ -29937,6 +29963,8 @@ static JSFunctionDef *js_new_function_def(JSContext *ctx,
     return fd;
 }
 
+#endif // QJS_DISABLE_PARSER
+
 static void free_bytecode_atoms(JSRuntime *rt,
                                 const uint8_t *bc_buf, int bc_len,
                                 bool use_short_opcodes)
@@ -29969,6 +29997,8 @@ static void free_bytecode_atoms(JSRuntime *rt,
         pos += len;
     }
 }
+
+#ifndef QJS_DISABLE_PARSER
 
 static void js_free_function_def(JSContext *ctx, JSFunctionDef *fd)
 {
@@ -30031,6 +30061,8 @@ static void js_free_function_def(JSContext *ctx, JSFunctionDef *fd)
     }
     js_free(ctx, fd);
 }
+
+#endif // QJS_DISABLE_PARSER
 
 #ifdef ENABLE_DUMPS // JS_DUMP_BYTECODE_*
 static const char *skip_lines(const char *p, int n) {
@@ -30487,6 +30519,8 @@ static __maybe_unused void js_dump_function_bytecode(JSContext *ctx, JSFunctionB
     printf("\n");
 }
 #endif
+
+#ifndef QJS_DISABLE_PARSER
 
 static int add_closure_var(JSContext *ctx, JSFunctionDef *s,
                            bool is_local, bool is_arg,
@@ -33795,8 +33829,10 @@ static JSValue js_create_function(JSContext *ctx, JSFunctionDef *fd)
        are used to compile the eval and they must be ordered by scope,
        so it is necessary to create the closure variables before any
        other variable lookup is done. */
+#ifndef QJS_DISABLE_PARSER
     if (fd->has_eval_call)
         add_eval_variables(ctx, fd);
+#endif // QJS_DISABLE_PARSER
 
     /* add the module global variables in the closure */
     if (fd->module) {
@@ -33955,6 +33991,8 @@ static JSValue js_create_function(JSContext *ctx, JSFunctionDef *fd)
     return JS_EXCEPTION;
 }
 
+#endif // QJS_DISABLE_PARSER
+
 static void free_function_bytecode(JSRuntime *rt, JSFunctionBytecode *b)
 {
     int i;
@@ -33988,6 +34026,8 @@ static void free_function_bytecode(JSRuntime *rt, JSFunctionBytecode *b)
         js_free_rt(rt, b);
     }
 }
+
+#ifndef QJS_DISABLE_PARSER
 
 static __exception int js_parse_directives(JSParseState *s)
 {
@@ -34800,6 +34840,8 @@ static __exception int js_parse_program(JSParseState *s)
     return 0;
 }
 
+#endif // QJS_DISABLE_PARSER
+
 static void js_parse_init(JSContext *ctx, JSParseState *s,
                           const char *input, size_t input_len,
                           const char *filename, int line)
@@ -34854,6 +34896,8 @@ JSValue JS_EvalFunction(JSContext *ctx, JSValue fun_obj)
 {
     return JS_EvalFunctionInternal(ctx, fun_obj, ctx->global_obj, NULL, NULL);
 }
+
+#ifndef QJS_DISABLE_PARSER
 
 /* 'input' must be zero terminated i.e. input[input_len] = '\0'. */
 /* `export_name` and `input` may be pure ASCII or UTF-8 encoded */
@@ -34970,6 +35014,8 @@ static JSValue __JS_EvalInternal(JSContext *ctx, JSValueConst this_obj,
         js_free_module_def(ctx, m);
     return JS_EXCEPTION;
 }
+
+#endif // QJS_DISABLE_PARSER
 
 /* the indirection is needed to make 'eval' optional */
 static JSValue JS_EvalInternal(JSContext *ctx, JSValueConst this_obj,
@@ -52892,7 +52938,9 @@ void JS_AddIntrinsicDate(JSContext *ctx)
 
 void JS_AddIntrinsicEval(JSContext *ctx)
 {
+#ifndef QJS_DISABLE_PARSER
     ctx->eval_internal = __JS_EvalInternal;
+#endif // QJS_DISABLE_PARSER
 }
 
 void JS_RemoveIntrinsicEval(JSContext *ctx)
@@ -57564,6 +57612,7 @@ static void _JS_AddIntrinsicCallSite(JSContext *ctx)
 
 bool JS_DetectModule(const char *input, size_t input_len)
 {
+#ifndef QJS_DISABLE_PARSER
     JSRuntime *rt;
     JSContext *ctx;
     JSValue val;
@@ -57592,6 +57641,9 @@ bool JS_DetectModule(const char *input, size_t input_len)
     JS_FreeContext(ctx);
     JS_FreeRuntime(rt);
     return is_module;
+#else
+    return false;
+#endif // QJS_DISABLE_PARSER
 }
 
 uintptr_t js_std_cmd(int cmd, ...) {
