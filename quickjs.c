@@ -27663,6 +27663,26 @@ static JSModuleDef *js_new_module_def(JSContext *ctx, JSAtom name)
     return m;
 }
 
+static JSModuleDef *js_new_module_def_hidden(JSContext *ctx, JSAtom name)
+{
+    JSModuleDef *m;
+    m = js_mallocz(ctx, sizeof(*m));
+    if (!m) {
+        JS_FreeAtom(ctx, name);
+        return NULL;
+    }
+    m->header.ref_count = 1;
+    m->module_name = name;
+    m->module_ns = JS_UNDEFINED;
+    m->func_obj = JS_UNDEFINED;
+    m->eval_exception = JS_UNDEFINED;
+    m->meta_obj = JS_UNDEFINED;
+    m->promise = JS_UNDEFINED;
+    m->resolving_funcs[0] = JS_UNDEFINED;
+    m->resolving_funcs[1] = JS_UNDEFINED;
+    return m;
+}
+
 static void js_mark_module_def(JSRuntime *rt, JSModuleDef *m,
                                JS_MarkFunc *mark_func)
 {
@@ -27828,6 +27848,19 @@ JSModuleDef *JS_NewCModule(JSContext *ctx, const char *name_str,
     if (name == JS_ATOM_NULL)
         return NULL;
     m = js_new_module_def(ctx, name);
+    m->init_func = func;
+    return m;
+}
+
+JSModuleDef *JS_NewCModuleHidden(JSContext *ctx, const char *name_str,
+                           JSModuleInitFunc *func)
+{
+    JSModuleDef *m;
+    JSAtom name;
+    name = JS_NewAtom(ctx, name_str);
+    if (name == JS_ATOM_NULL)
+        return NULL;
+    m = js_new_module_def_hidden(ctx, name);
     m->init_func = func;
     return m;
 }
@@ -52860,6 +52893,11 @@ void JS_AddIntrinsicDate(JSContext *ctx)
 void JS_AddIntrinsicEval(JSContext *ctx)
 {
     ctx->eval_internal = __JS_EvalInternal;
+}
+
+void JS_RemoveIntrinsicEval(JSContext *ctx)
+{
+    ctx->eval_internal = NULL;
 }
 
 /* BigInt */
