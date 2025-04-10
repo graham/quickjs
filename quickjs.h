@@ -1236,6 +1236,8 @@ typedef int JSModuleInitFunc(JSContext *ctx, JSModuleDef *m);
 
 JS_EXTERN JSModuleDef *JS_NewCModule(JSContext *ctx, const char *name_str,
                                      JSModuleInitFunc *func);
+JS_EXTERN JSModuleDef *JS_NewCModuleHidden(JSContext *ctx, const char *name_str,
+                                     JSModuleInitFunc *func);
 /* can only be called before the module is instantiated */
 JS_EXTERN int JS_AddModuleExport(JSContext *ctx, JSModuleDef *m, const char *name_str);
 JS_EXTERN int JS_AddModuleExportList(JSContext *ctx, JSModuleDef *m,
